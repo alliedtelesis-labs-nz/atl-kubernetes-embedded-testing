@@ -16,31 +16,26 @@ pipeline {
 
     stages {
 
-        stage('Build with Go Container') {
+       stage('Clone Repository') {
             steps {
-                sh '''
-                    set -euxo pipefail
-                    docker run --rm -v $PWD:/workspace -w /workspace golang:${GO_VERSION} sh -c "
-                        cd ${PROJECT_DIR} && 
-                        go mod download && 
-                        make build && 
-                        make install
-                    "
-                '''
+                git url: "${env.MY_GIT_URL}", branch: "${env.MY_GIT_BRANCH}"
+                script {
+                    GIT_COMMIT = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+                    env.GIT_COMMIT = GIT_COMMIT
+                }
             }
         }
 
         stage('Build ket') {
             steps {
-                withDockerRegistry([credentialsId: 'maker-for-docker', url: 'https://docker.atlnz.lc']) {
+                    withDockerRegistry([credentialsId: 'maker-for-docker', url: 'https://docker.atlnz.lc']) {
                     sh '''
-                        set -euxo pipefail
                         cd ${PROJECT_DIR}
-                        docker build -t docker.atlnz.lc/cloud/build/kubernetes-embedded-testing:${GIT_COMMIT} -t docker.atlnz.lc/cloud/build/kubernetes-embedded-testing:latest .
-                        docker push docker.atlnz.lc/cloud/build/kubernetes-embedded-testing:${GIT_COMMIT}
-                        docker push docker.atlnz.lc/cloud/build/kubernetes-embedded-testing:latest
-                    '''
-                }
+                        docker build -t docker.atlnz.lc/gui/cloud/build/kubernetes-embedded-testing:${GIT_COMMIT} -t docker.atlnz.lc/gui/cloud/build/kubernetes-embedded-testing:latest .
+                        docker push docker.atlnz.lc/gui/cloud/build/kubernetes-embedded-testing:${GIT_COMMIT}
+                        docker push docker.atlnz.lc/gui/cloud/build/kubernetes-embedded-testing:latest
+                        '''
+                    }
             }
         }
     }
