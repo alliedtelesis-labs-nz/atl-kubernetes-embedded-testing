@@ -1,0 +1,51 @@
+pipeline {
+    agent {
+        label "${AGENT_LABEL}"
+    }
+
+    options {
+        timestamps()
+        ansiColor('xterm')
+        buildDiscarder(logRotator(numToKeepStr: '50', daysToKeepStr: '30'))
+    }
+
+    environment {
+        GO_VERSION   = '1.24'
+        PROJECT_DIR  = 'kubernetes-embedded-testing'
+    }
+
+    stages {
+
+        stage('Build with Go Container') {
+            steps {
+                sh '''
+                    set -euxo pipefail
+                    docker run --rm -v $PWD:/workspace -w /workspace golang:${GO_VERSION} sh -c "
+                        cd ${PROJECT_DIR} && 
+                        go mod download && 
+                        make build && 
+                        make install
+                    "
+                '''
+            }
+        }
+
+        stage('Build ket') {
+            steps {
+                withDockerRegistry([credentialsId: 'maker-for-docker', url: 'https://docker.atlnz.lc']) {
+                    sh '''
+                        set -euxo pipefail
+                        cd ${PROJECT_DIR}
+                        docker build -t docker.atlnz.lc/cloud/build/kubernetes-embedded-testing:${GIT_COMMIT} -t docker.atlnz.lc/cloud/build/kubernetes-embedded-testing:latest .
+                        docker push docker.atlnz.lc/cloud/build/kubernetes-embedded-testing:${GIT_COMMIT}
+                        docker push docker.atlnz.lc/cloud/build/kubernetes-embedded-testing:latest
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always { cleanWs() }
+    }
+}

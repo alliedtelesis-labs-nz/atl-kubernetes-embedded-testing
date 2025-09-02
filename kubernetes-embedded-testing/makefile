@@ -21,7 +21,7 @@ BINARY_DIR=bin
 build:
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p $(BINARY_DIR)
-	$(GOBUILD) -o $(BINARY_DIR)/$(BINARY_NAME) ./cmd/testrunner
+	$(GOBUILD) -buildvcs=false -o $(BINARY_DIR)/$(BINARY_NAME) ./cmd/testrunner
 	@echo "Build complete: $(BINARY_DIR)/$(BINARY_NAME)"
 
 # Build for multiple platforms
@@ -29,9 +29,9 @@ build:
 build-all:
 	@echo "Building for multiple platforms..."
 	@mkdir -p $(BINARY_DIR)
-	GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_DIR)/$(BINARY_NAME)-linux-amd64 ./cmd/testrunner
-	GOOS=darwin GOARCH=amd64 $(GOBUILD) -o $(BINARY_DIR)/$(BINARY_NAME)-darwin-amd64 ./cmd/testrunner
-	GOOS=darwin GOARCH=arm64 $(GOBUILD) -o $(BINARY_DIR)/$(BINARY_NAME)-darwin-arm64 ./cmd/testrunner
+	GOOS=linux GOARCH=amd64 $(GOBUILD) -buildvcs=false -o $(BINARY_DIR)/$(BINARY_NAME)-linux-amd64 ./cmd/testrunner
+	GOOS=darwin GOARCH=amd64 $(GOBUILD) -buildvcs=false -o $(BINARY_DIR)/$(BINARY_NAME)-darwin-amd64 ./cmd/testrunner
+	GOOS=darwin GOARCH=arm64 $(GOBUILD) -buildvcs=false -o $(BINARY_DIR)/$(BINARY_NAME)-darwin-arm64 ./cmd/testrunner
 	@echo "Multi-platform build complete"
 
 # Clean build artifacts
