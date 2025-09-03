@@ -1,7 +1,7 @@
 FROM golang:1.24
 
-copy . .
+COPY . .
 
-RUN make build && \
-  cp ./bin/ket /usr/local/bin/ket && \
-  rm -rf .
+RUN make build \
+  && ls -l ./bin \
+  && cp ./bin/ket /usr/local/bin/ket
