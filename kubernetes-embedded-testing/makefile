@@ -5,7 +5,7 @@ DOCKER_IMAGE=ket:latest
 GO_FILES=$(shell find . -name "*.go" -type f)
 
 # Go parameters
-GOCMD=go
+GOCMD=CGO_ENABLED=0 go
 GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
