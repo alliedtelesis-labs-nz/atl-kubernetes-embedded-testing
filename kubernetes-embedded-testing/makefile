@@ -40,6 +40,7 @@ clean:
 	@echo "Cleaning..."
 	$(GOCLEAN)
 	rm -rf $(BINARY_DIR)
+	rm -f coverage.out coverage.html coverage-*.out coverage-*.html
 	@echo "Clean complete"
 
 # Run tests
@@ -53,9 +54,36 @@ test:
 .PHONY: test-coverage
 test-coverage:
 	@echo "Running tests with coverage..."
-	$(GOTEST) -v -coverprofile=coverage.out ./...
+	$(GOTEST) -v -coverprofile=coverage.out -covermode=atomic ./pkg/...
 	$(GOCMD) tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
+	@echo "Open coverage.html in your browser to view detailed coverage"
+
+# Run tests with coverage and show summary
+.PHONY: test-coverage-summary
+test-coverage-summary:
+	@echo "Running tests with coverage..."
+	$(GOTEST) -v -coverprofile=coverage.out -covermode=atomic ./pkg/...
+	@echo ""
+	@echo "=== Coverage Summary ==="
+	$(GOCMD) tool cover -func=coverage.out | tail -1
+	@echo ""
+	@echo "=== Package Coverage ==="
+	$(GOTEST) -coverprofile=coverage.out -covermode=atomic ./pkg/... | grep -E "(ok|FAIL)"
+	@echo ""
+	$(GOCMD) tool cover -html=coverage.out -o coverage.html
+	@echo "Detailed coverage report generated: coverage.html"
+
+# Show coverage for specific package
+.PHONY: test-coverage-pkg
+test-coverage-pkg:
+	@echo "Usage: make test-coverage-pkg PKG=pkg/launcher"
+	@if [ -z "$(PKG)" ]; then echo "Please specify PKG=package_name"; exit 1; fi
+	@echo "Running tests with coverage for $(PKG)..."
+	@PKG_NAME=$$(echo $(PKG) | sed 's/\//-/g'); \
+	$(GOTEST) -v -coverprofile=coverage-$$PKG_NAME.out -covermode=atomic ./$(PKG); \
+	$(GOCMD) tool cover -html=coverage-$$PKG_NAME.out -o coverage-$$PKG_NAME.html; \
+	echo "Coverage report for $(PKG) generated: coverage-$$PKG_NAME.html"
 
 # Install dependencies
 .PHONY: deps
@@ -152,8 +180,10 @@ help:
 	@echo "  build          - Build the binary"
 	@echo "  build-all      - Build for multiple platforms"
 	@echo "  clean          - Clean build artifacts"
-	@echo "  test           - Run tests"
-	@echo "  test-coverage  - Run tests with coverage"
+	@echo "  test                    - Run tests"
+	@echo "  test-coverage           - Run tests with coverage and generate HTML report"
+	@echo "  test-coverage-summary   - Run tests with coverage and show summary"
+	@echo "  test-coverage-pkg       - Run tests with coverage for specific package (PKG=pkg/name)"
 	@echo "  deps           - Install dependencies"
 	@echo "  mod-update     - Update go modules"
 	@echo "  fmt            - Format code"

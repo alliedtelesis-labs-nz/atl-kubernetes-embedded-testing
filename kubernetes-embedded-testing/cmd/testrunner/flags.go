@@ -13,8 +13,8 @@ func addRootFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVarP(&projectRoot, "project-root", "r", ".", "Project root path")
 	cmd.PersistentFlags().BoolVarP(&debug, "debug", "v", false, "Enable debug logging")
 	cmd.PersistentFlags().StringVarP(&workspacePath, "cluster-workspace-path", "w", "/workspace",
-		"Absolute path where the local project directory is mounted inside the test runner pod.\n" +
-			"Defaults to '/workspace', matching Kind/K3D volume mounts (e.g., '$(pwd):/workspace').\n" +
+		"Absolute path where the local project directory is mounted inside the test runner pod.\n"+
+			"Defaults to '/workspace', matching Kind/K3D volume mounts (e.g., '$(pwd):/workspace').\n"+
 			"Used for syncing source code between local and cluster environments.")
 	cmd.PersistentFlags().BoolVarP(&logPrefix, "log-prefix", "", true, "Show log prefixes ([INFO] [LAUNCHER], etc.)")
 	cmd.PersistentFlags().BoolVarP(&logTimestamp, "log-timestamp", "", true, "Show timestamps in logs")
@@ -32,8 +32,6 @@ func addLaunchFlags(cmd *cobra.Command) {
 		"Maximum number of retry attempts for a failed Kubernetes job.")
 	cmd.Flags().Int64VarP(&activeDeadline, "active-deadline-seconds", "d", 1800,
 		"Maximum duration in seconds the job is allowed to run before termination.")
-	cmd.Flags().BoolVarP(&dryRun, "dry-run", "", false,
-		"Generate and display the Kubernetes manifests without applying them.")
 }
 
 func setupViper() *viper.Viper {
@@ -66,7 +64,6 @@ func buildConfig() *config.Config {
 	v.SetDefault("backoffLimit", int32(1))
 	v.SetDefault("activeDeadlineS", int64(1800))
 	v.SetDefault("debug", false)
-	v.SetDefault("dryRun", false)
 
 	if projectRoot != "." {
 		v.Set("projectRoot", projectRoot)
@@ -92,9 +89,6 @@ func buildConfig() *config.Config {
 	if activeDeadline != 1800 {
 		v.Set("activeDeadlineS", activeDeadline)
 	}
-	if dryRun {
-		v.Set("dryRun", dryRun)
-	}
 
 	if !logPrefix {
 		v.Set("logging.prefix", false)
@@ -109,7 +103,6 @@ func buildConfig() *config.Config {
 		fmt.Printf("  clusterWorkspacePath: %s\n", workspacePath)
 		fmt.Printf("  image: %s\n", image)
 		fmt.Printf("  testCommand: %s\n", testCommand)
-		fmt.Printf("  dryRun: %t\n", dryRun)
 	}
 
 	cfg, err := config.LoadFromViper(v)
@@ -123,8 +116,7 @@ func buildConfig() *config.Config {
 			ActiveDeadlineS: activeDeadline,
 			Debug:           debug,
 			TestCommand:     testCommand,
-			KeepTestRunner:  keepNamespace,
-			DryRun:          dryRun,
+			KeepNamespace:  keepNamespace,
 		}
 	}
 

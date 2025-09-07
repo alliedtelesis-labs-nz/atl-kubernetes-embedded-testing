@@ -1,88 +1,88 @@
 # Kubernetes Test Runner
 
-A framework for running integration tests in Kubernetes with traffic interception capabilities.
-
-## Overview
-
-This project provides `ket` (Kubernetes Embedded Testing), a tool that:
-- Deploys test runners in isolated Kubernetes namespaces
-- Mounts source code via hostPath volumes (optimized for Kind clusters)
-- Supports traffic interception with mirrord (optional)
-- Automatically cleans up test resources
+Run integration tests in isolated Kubernetes environments with zero setup.
 
 ## Quick Start
 
 ```bash
-# Build the binary
-make build
+# Build and install
+make build && make install
 
-# Run tests against a target pod
-./kubernetes-embedded-testing/bin/ket launch \
-  --target-pod my-app \
-  --target-namespace default \
-  --test-command "npm test" \
-  --image node:18-alpine
+# Run tests
+ket launch --test-command "npm test"
 ```
 
-## Examples
+## Usage
 
-- **Node.js/TypeScript**: `example/nodejs-typescript/` - Mocha tests with Express server and MongoDB
-- **Go HTTP Server**: `example/go-http-server/` - Go tests with HTTP server
+### Basic Test Execution
 
-## Architecture
+```bash
+# Run tests in current directory
+ket launch --test-command "npm test"
 
-```mermaid
-sequenceDiagram
-    participant User as Localhost/Dev Env
-    participant Ket as ket Binary
-    participant Cluster as Kind Cluster
-    participant TestPod as Test Runner Pod
-    participant TestNamespace as Test Namespace
-
-    User->>Ket: ket launch --test-command
-    Ket->>Cluster: Create test namespace
-    Cluster-->>Ket: Namespace created
-
-    Ket->>Cluster: Deploy test runner pod
-    Cluster->>TestNamespace: Schedule pod
-    TestNamespace-->>Cluster: Pod running
-    Cluster-->>Ket: Pod ready
-
-    Ket->>TestPod: Mount source code
-    TestPod-->>Ket: Source mounted
-
-    Ket->>TestPod: Execute test command
-    TestPod->>TestNamespace: Deploy test services
-    TestNamespace-->>TestPod: Services ready
-
-    loop Per-Test Lifecycle
-        TestPod->>TestNamespace: Create test resources
-        TestNamespace-->>TestPod: Resources ready
-        TestPod->>TestPod: Run test (e.g., mocha)
-        TestPod-->>Ket: Stream Mocha Logs
-        Ket-->>User: Test Runner Pod std{out,err}
-        TestPod->>TestNamespace: Clean test resources
-        TestNamespace-->>TestPod: Resources cleaned
-    end
-
-    TestPod-->>Ket: Tests complete
-    Ket->>Cluster: Cleanup namespace
-    Cluster->>TestNamespace: Delete namespace
-    Cluster-->>Ket: Cleanup complete
-    Ket-->>User: Test results
+# Generate manifests without running
+ket manifest --test-command "npm test"
 ```
 
-**Key Components:**
-- **Isolated Testing**: Each test run gets a unique namespace
-- **HostPath Mounting**: Direct source code access for fast iteration
-- **Graceful Fallback**: Works with or without traffic interception
-- **Automatic Cleanup**: Resources cleaned up after test completion
+### Test Execution With Config File
+
+Configuration can be provided in a JSON or YAML file, and will be automatically loaded from the current directory, or specified with the `--config` flag.
+
+```bash
+# Run tests with config file
+ket launch --config ket-config.yaml
+```
+
+Example `ket-config.json` File:
+
+```json
+{
+    "mode": "launch",
+    "projectRoot": ".",
+    "image": "atidyshirt/kubernetes-embedded-test-runner-node:latest",
+    "testCommand": "npm run test:internal:mocha-integration",
+    "clusterWorkspacePath": "/workspace",
+    "debug": false,
+    "logging": {
+        "prefix": true,
+        "timestamp": true
+    }
+}
+```
+
+### Environment Variables
+
+Test scripts have access to:
+
+- `KET_TEST_NAMESPACE` - The test namespace
+- `KET_PROJECT_ROOT` - Project root path
+- `KET_WORKSPACE_PATH` - Mounted workspace path
+
+For more information on these environment variables, run the `ket env` command.
+
+```bash
+ket env
+```
+
+### Volume Mounts
+
+- `/workspace` - (Required) Your source code - use `kind-config.yaml` or similar to mount this directory
+- `/reports` - (Optional) Write test artifacts here
 
 ## Requirements
 
+Runtime:
+
 - Kubernetes cluster (Kind recommended)
-- Go 1.24+
+    * Note, a `kind-config.yaml` or similar will be needed to setup mounting of source code
+        * Examples can be found in the `example/` directory, consider how this maps to the `ket-config.yaml` file
+- Docker image with dependencies for your Test Runner
+    * e.g.: A `node:22.15` container with `npm`,`node` + `kubectl` installed
 - Docker
+
+Build:
+
+- Go 1.24+
 
 ## Development
 
@@ -90,7 +90,9 @@ sequenceDiagram
 make build    # Build binary
 make test     # Run tests
 make lint     # Lint code
-make clean    # Clean build artifacts
+make clean    # Clean artifacts
 ```
 
-See `kubernetes-embedded-testing/README.md` for detailed development information.
+## Architecture
+
+For detailed architecture and technical documentation, see [`kubernetes-embedded-testing/README.md`](kubernetes-embedded-testing/README.md).

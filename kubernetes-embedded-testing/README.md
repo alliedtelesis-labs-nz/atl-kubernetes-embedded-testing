@@ -1,71 +1,88 @@
 # ket - Kubernetes Embedded Testing
 
-A Go-based tool for deploying and running tests in Kubernetes environments.
+A Go-based tool for deploying and running tests in isolated Kubernetes environments.
 
-## Overview
+## Architecture
 
-`ket` creates isolated test environments in Kubernetes, mounts your source code, and executes tests in an isolated namespace.
+```mermaid
+sequenceDiagram
+    participant User as Localhost/Dev Env
+    participant Ket as ket Binary
+    participant K8sAPI as Kubernetes API
+    participant TestNamespace as Test Namespace
+    participant TestJob as Test Runner Job
+    participant TestPod as Test Runner Pod
 
-## Features
+    User->>Ket: ket launch --test-command "npm test"
+    Ket->>Ket: Generate unique namespace name
+    Ket->>K8sAPI: Create Namespace
+    K8sAPI->>TestNamespace: Create namespace
+    TestNamespace-->>K8sAPI: Namespace created
+    K8sAPI-->>Ket: Namespace ready
 
-- **Isolated Testing**: Unique namespace per test run
-- **HostPath Mounting**: Direct source code access (Kind-optimized)
-- **Automatic Cleanup**: Resources cleaned up after completion
-- **Multi-language Support**: Node.js, Go, Python, etc.
-- **Config File Support**: YAML/JSON configuration files
+    Ket->>K8sAPI: Create ServiceAccount
+    K8sAPI->>TestNamespace: Deploy ServiceAccount
+    TestNamespace-->>K8sAPI: ServiceAccount ready
+    K8sAPI-->>Ket: ServiceAccount created
 
-## Installation
+    Ket->>K8sAPI: Create Role (RBAC permissions)
+    K8sAPI->>TestNamespace: Deploy Role
+    TestNamespace-->>K8sAPI: Role ready
+    K8sAPI-->>Ket: Role created
 
-```bash
-# Build from source
-make build
+    Ket->>K8sAPI: Create RoleBinding
+    K8sAPI->>TestNamespace: Deploy RoleBinding
+    TestNamespace-->>K8sAPI: RoleBinding ready
+    K8sAPI-->>Ket: RoleBinding created
 
-# Install dependencies
-go mod download
+    Ket->>K8sAPI: Create Job with mounted source code
+    K8sAPI->>TestNamespace: Schedule Job
+    TestNamespace->>TestJob: Create Job resource
+    TestJob->>TestPod: Schedule Pod
+    TestPod-->>TestJob: Pod running
+    TestJob-->>K8sAPI: Job active
+    K8sAPI-->>Ket: Job created
 
-# Run tests
-make test
+    Ket->>TestPod: Mount /workspace (source code)
+    TestPod-->>Ket: Source code mounted
+
+    Ket->>TestPod: Mount /reports (empty dir)
+    TestPod-->>Ket: Reports directory ready
+
+    Ket->>TestPod: Set environment variables
+    Note over TestPod: KET_TEST_NAMESPACE<br/>KET_PROJECT_ROOT<br/>KET_WORKSPACE_PATH
+
+    Ket->>TestPod: Execute test command
+    TestPod->>TestPod: Run tests (e.g., npm test)
+    TestPod->>TestNamespace: Create test resources (if needed)
+    TestNamespace-->>TestPod: Test resources ready
+
+    loop Test Execution
+        TestPod->>TestPod: Execute test cases
+        TestPod-->>Ket: Stream stdout/stderr
+        Ket-->>User: Real-time test output
+        TestPod->>TestPod: Write reports to /reports
+    end
+
+    TestPod-->>TestJob: Tests complete (success/failure)
+    TestJob-->>K8sAPI: Job finished
+    K8sAPI-->>Ket: Job completed
+
+    Ket->>K8sAPI: Delete Namespace (cleanup)
+    K8sAPI->>TestNamespace: Delete namespace
+    TestNamespace-->>K8sAPI: Namespace deleted
+    K8sAPI-->>Ket: Cleanup complete
+
+    Ket-->>User: Test results & exit code
 ```
 
-## Usage
+## Key Components
 
-### Using Command Line Options
-
-```bash
-ket launch \
-  --test-command "npm test" \
-  --image node:18-alpine
-```
-
-### Using Configuration File
-
-Create a `ket-config.yaml` file:
-
-```yaml
-mode: launch
-projectRoot: .
-image: node:18-alpine
-debug: false
-testCommand: npm test
-keepNamespace: false
-backoffLimit: 1
-activeDeadlineS: 1800
-kindWorkspacePath: /workspace
-```
-
-Then run:
-
-```bash
-ket launch --config ket-config.yaml
-```
-
-### Command Line Options Override Config File
-
-You can combine config files with command line options. Command line options take precedence:
-
-```bash
-ket launch --config ket-config.yaml --debug --keep-namespace
-```
+- **Isolated Testing**: Each test run gets a unique namespace
+- **RBAC Setup**: ServiceAccount, Role, and RoleBinding for test permissions
+- **Source Code Mounting**: HostPath volume for direct code access
+- **Environment Variables**: Test scripts have access to namespace and path info
+- **Automatic Cleanup**: Resources cleaned up after test completion
 
 ## Command Reference
 
@@ -76,7 +93,7 @@ ket launch --config ket-config.yaml --debug --keep-namespace
 | `--config, -c` | Path to config file | - |
 | `--debug, -v` | Enable debug logging | `false` |
 | `--image, -i` | Runner image | `node:18-alpine` |
-| `--kind-workspace-path, -w` | Kind workspace path | `/workspace` |
+| `--cluster-workspace-path, -w` | Workspace path in pod | `/workspace` |
 | `--project-root, -r` | Project root path | `.` |
 
 ### Launch Flags
@@ -88,17 +105,11 @@ ket launch --config ket-config.yaml --debug --keep-namespace
 | `--backoff-limit, -b` | Job backoff limit | `1` | ❌ |
 | `--active-deadline-seconds, -d` | Job deadline in seconds | `1800` | ❌ |
 
-## Architecture
+### Commands
 
-```
-Local → ket launch → Isolated Namespace → Test Job → Results → Cleanup
-```
-
-1. **Namespace Creation**: Unique `ket-<uuid>` namespace
-2. **Job Deployment**: Test runner with source code mounted
-3. **Test Execution**: Your test command runs
-4. **Result Collection**: Test output streamed to stdout
-5. **Cleanup**: Namespace and resources removed
+- `ket launch` - Run tests in Kubernetes
+- `ket manifest` - Generate Kubernetes manifests
+- `ket env` - Show environment variables documentation
 
 ## Development
 
@@ -108,6 +119,9 @@ Local → ket launch → Isolated Namespace → Test Job → Results → Cleanup
 pkg/
 ├── config/     # Configuration and file loading
 ├── kube/       # Kubernetes operations
+│   ├── apply/  # Cluster resource application
+│   ├── generate/ # Kubernetes object generation
+│   └── manifest/ # YAML marshaling
 ├── launcher/   # Job launch orchestration
 └── logger/     # Structured logging
 
@@ -128,39 +142,18 @@ make clean      # Clean artifacts
 
 ```bash
 # Run all tests
-go test -v ./...
-
-# Run specific package
-go test -v ./pkg/kube
+make test
 
 # Run with coverage
-go test -v -coverprofile=coverage.out ./...
+make test-coverage-summary
+
+# Run specific package
+make test-coverage-pkg PKG=pkg/launcher
 ```
 
-## Examples
-
-See the `example/` directory for working examples:
-- **Node.js**: Express server with Mocha tests
-- **Go**: HTTP server with Go tests
-
-## Requirements
+### Requirements
 
 - Go 1.24+
 - Kubernetes cluster (Kind recommended)
 - kubectl configured
 - Docker (for building)
-
-## Docker Image
-
-The project includes a simplified Dockerfile that creates a test runner image with essential tools:
-
-- **Base**: Ubuntu 24.04
-- **kubectl**: Copied from official `bitnami/kubectl` image
-- **Node.js**: Latest LTS version (22.x)
-- **mirrord**: Installed using official MetalBear installation script
-
-To build the image:
-
-```bash
-docker build -t ket-test-runner .
-```

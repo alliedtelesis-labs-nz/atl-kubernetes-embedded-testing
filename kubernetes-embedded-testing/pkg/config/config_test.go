@@ -12,7 +12,7 @@ func TestConfigStructure(t *testing.T) {
 		Image:           "node:18-alpine",
 		Debug:           false,
 		TestCommand:     "npm test",
-		KeepTestRunner:  false,
+		KeepNamespace:  false,
 		BackoffLimit:    1,
 		ActiveDeadlineS: 1800,
 		WorkspacePath:   "/workspace",
@@ -86,7 +86,7 @@ clusterWorkspacePath: /custom/workspace`
 		t.Errorf("Expected TestCommand to be 'npm run test:integration', got %s", cfg.TestCommand)
 	}
 
-	if !cfg.KeepTestRunner {
+	if !cfg.KeepNamespace {
 		t.Error("Expected KeepNamespace to be true")
 	}
 
@@ -124,7 +124,7 @@ func TestConfigValidation(t *testing.T) {
 				Image:           "node:18-alpine",
 				Debug:           false,
 				TestCommand:     "npm test",
-				KeepTestRunner:  false,
+				KeepNamespace:  false,
 				BackoffLimit:    1,
 				ActiveDeadlineS: 1800,
 				WorkspacePath:   "/workspace",
@@ -139,7 +139,7 @@ func TestConfigValidation(t *testing.T) {
 				Image:           "node:18-alpine",
 				Debug:           false,
 				TestCommand:     "",
-				KeepTestRunner:  false,
+				KeepNamespace:  false,
 				BackoffLimit:    1,
 				ActiveDeadlineS: 1800,
 				WorkspacePath:   "/workspace",
@@ -154,7 +154,7 @@ func TestConfigValidation(t *testing.T) {
 				Image:           "",
 				Debug:           false,
 				TestCommand:     "npm test",
-				KeepTestRunner:  false,
+				KeepNamespace:  false,
 				BackoffLimit:    1,
 				ActiveDeadlineS: 1800,
 				WorkspacePath:   "/workspace",

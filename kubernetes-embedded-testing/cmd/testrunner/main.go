@@ -18,7 +18,6 @@ var (
 	keepNamespace  bool
 	backoffLimit   int32
 	activeDeadline int64
-	dryRun         bool
 	testExitCode   int
 	logPrefix      bool
 	logTimestamp   bool

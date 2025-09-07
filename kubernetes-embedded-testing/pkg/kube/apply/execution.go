@@ -1,4 +1,4 @@
-package kube
+package apply
 
 import (
 	"context"
@@ -192,7 +192,6 @@ func streamPodLogs(ctx context.Context, client *kubernetes.Clientset, pod corev1
 	}
 	defer stream.Close()
 
-	// Use TestRunnerLogger to stream logs with proper prefixing
 	logger.TestRunnerLogger.StreamLogs(stream)
 	return nil
 }

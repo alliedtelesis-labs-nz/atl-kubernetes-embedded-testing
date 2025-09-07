@@ -1,23 +1,19 @@
-package kube
+package generate
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"testrunner/pkg/config"
-	"testrunner/pkg/logger"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
-// InjectTestRunnerJob creates a Kubernetes job that injects the test runner into a pod,
-// mounts the source code directory from the host machine, and runs the specified test command
-func InjectTestRunnerJob(ctx context.Context, client *kubernetes.Clientset, cfg config.Config, namespace string) (*batchv1.Job, error) {
+// Job generates a job manifest
+func Job(cfg config.Config, namespace string) (*batchv1.Job, error) {
 	hostProjectRoot := filepath.Join(cfg.WorkspacePath, cfg.ProjectRoot)
 	if cfg.ProjectRoot == "." {
 		hostProjectRoot = cfg.WorkspacePath
@@ -38,6 +34,10 @@ func InjectTestRunnerJob(ctx context.Context, client *kubernetes.Clientset, cfg 
 	}
 
 	job := &batchv1.Job{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "batch/v1",
+			Kind:       "Job",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("ket-%s", projectName),
 			Namespace: namespace,
@@ -47,7 +47,8 @@ func InjectTestRunnerJob(ctx context.Context, client *kubernetes.Clientset, cfg 
 			ActiveDeadlineSeconds: &cfg.ActiveDeadlineS,
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
-					RestartPolicy: corev1.RestartPolicyNever,
+					ServiceAccountName: "default",
+					RestartPolicy:      corev1.RestartPolicyNever,
 					Volumes: []corev1.Volume{
 						{
 							Name: "source-code",
@@ -76,6 +77,20 @@ func InjectTestRunnerJob(ctx context.Context, client *kubernetes.Clientset, cfg 
 								cfg.TestCommand,
 							},
 							WorkingDir: workingDir,
+							Env: []corev1.EnvVar{
+								{
+									Name:  "KET_TEST_NAMESPACE",
+									Value: namespace,
+								},
+								{
+									Name:  "KET_PROJECT_ROOT",
+									Value: cfg.ProjectRoot,
+								},
+								{
+									Name:  "KET_WORKSPACE_PATH",
+									Value: cfg.WorkspacePath,
+								},
+							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      "source-code",
@@ -93,20 +108,13 @@ func InjectTestRunnerJob(ctx context.Context, client *kubernetes.Clientset, cfg 
 		},
 	}
 
-	logger.KubeLogger.Info("Creating job %s in namespace %s", job.Name, namespace)
-	createdJob, err := client.BatchV1().Jobs(namespace).Create(ctx, job, metav1.CreateOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create job: %w", err)
-	}
-
-	logger.KubeLogger.Info("Job created successfully: %s", createdJob.Name)
-	return createdJob, nil
+	return job, nil
 }
 
-// calculateWorkingDirectory determines the working directory for the job
-func calculateWorkingDirectory(projectRoot, kindWorkspacePath string) (string, error) {
+// calculateWorkingDirectory calculates the working directory for the test runner
+func calculateWorkingDirectory(projectRoot, workspacePath string) (string, error) {
 	if projectRoot == "." {
-		return kindWorkspacePath, nil
+		return workspacePath, nil
 	}
-	return filepath.Join(kindWorkspacePath, projectRoot), nil
+	return filepath.Join(workspacePath, projectRoot), nil
 }

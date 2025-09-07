@@ -18,12 +18,10 @@ type Config struct {
 	Image           string          `mapstructure:"image" yaml:"image" json:"image"`
 	Debug           bool            `mapstructure:"debug" yaml:"debug" json:"debug"`
 	TestCommand     string          `mapstructure:"testCommand" yaml:"testCommand" json:"testCommand"`
-	KeepTestRunner  bool            `mapstructure:"keepNamespace" yaml:"keepNamespace" json:"keepNamespace"`
+	KeepNamespace  bool            `mapstructure:"keepNamespace" yaml:"keepNamespace" json:"keepNamespace"`
 	BackoffLimit    int32           `mapstructure:"backoffLimit" yaml:"backoffLimit" json:"backoffLimit"`
 	ActiveDeadlineS int64           `mapstructure:"activeDeadlineS" yaml:"activeDeadlineS" json:"activeDeadlineS"`
 	WorkspacePath   string          `mapstructure:"clusterWorkspacePath" yaml:"clusterWorkspacePath" json:"clusterWorkspacePath"`
-	DryRun          bool            `mapstructure:"dryRun" yaml:"dryRun" json:"dryRun"`
-	ManifestMode    bool            `mapstructure:"manifestMode" yaml:"manifestMode" json:"manifestMode"`
 	Logging         LoggingConfig   `mapstructure:"logging" yaml:"logging" json:"logging"`
 	Ctx             context.Context `mapstructure:"-" yaml:"-" json:"-"`
 }
