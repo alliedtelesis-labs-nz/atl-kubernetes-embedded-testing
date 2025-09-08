@@ -72,7 +72,7 @@ EXAMPLES:
   # Run with custom image and timeout
   ket launch --image "node:18-alpine" --active-deadline 3600 --test-command "npm run test:integration"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return executeLaunch(ctx)
+			return executeLaunch(ctx, cmd)
 		},
 		// Disable help display on errors since test failures are expected
 		SilenceUsage:  true,
@@ -86,14 +86,14 @@ EXAMPLES:
 }
 
 // executeLaunch handles the launch command execution
-func executeLaunch(ctx context.Context) error {
+func executeLaunch(ctx context.Context, cmd *cobra.Command) error {
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("operation cancelled")
 	default:
 	}
 
-	cfg := buildConfig()
+	cfg := buildConfig(cmd)
 	cfg.Ctx = ctx
 	if err := launcher.RunLaunch(*cfg); err != nil {
 		if testErr, ok := err.(*launcher.TestExecutionError); ok {
@@ -133,7 +133,7 @@ EXAMPLES:
   # Generate manifests for specific project directory
   ket manifest --project-root "src" --test-command "python -m pytest"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return executeManifest(ctx)
+			return executeManifest(ctx, cmd)
 		},
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -146,14 +146,14 @@ EXAMPLES:
 }
 
 // executeManifest handles the manifest command execution
-func executeManifest(ctx context.Context) error {
+func executeManifest(ctx context.Context, cmd *cobra.Command) error {
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("operation cancelled")
 	default:
 	}
 
-	cfg := buildConfig()
+	cfg := buildConfig(cmd)
 	cfg.Ctx = ctx
 
 	if err := launcher.RunManifest(*cfg); err != nil {

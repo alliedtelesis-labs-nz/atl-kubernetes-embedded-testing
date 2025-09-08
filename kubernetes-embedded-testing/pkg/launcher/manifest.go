@@ -14,7 +14,7 @@ func RunManifest(cfg config.Config) error {
 	// Set log level to SILENT in manifest mode for clean output
 	logger.SetGlobalLevel(logger.SILENT)
 
-	namespace := generateTestNamespace(cfg.ProjectRoot)
+	namespace := generateTestNamespace(cfg)
 
 	manifests, err := manifest.All(cfg, namespace)
 	if err != nil {

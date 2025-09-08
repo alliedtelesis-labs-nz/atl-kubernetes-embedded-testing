@@ -107,6 +107,7 @@ func TestRunManifest_ProjectRootVariations(t *testing.T) {
 
 func TestRunManifest_NamespaceGeneration(t *testing.T) {
 	cfg := config.Config{
+		NamespacePrefix: "kubernetes-embedded-test",
 		ProjectRoot: "test-project",
 	}
 
@@ -125,13 +126,13 @@ func TestRunManifest_NamespaceGeneration(t *testing.T) {
 
 	// Verify namespace follows expected pattern
 	outputStr := string(output)
-	assert.Contains(t, outputStr, "name: kubernetes-embedded-test-test-project-")
+	assert.Contains(t, outputStr, "name: kubernetes-embedded-test-")
 
 	// Extract namespace name and verify it's unique
 	lines := strings.Split(outputStr, "\n")
 	var namespaceName string
 	for _, line := range lines {
-		if strings.Contains(line, "name: kubernetes-embedded-test-test-project-") {
+		if strings.Contains(line, "name: kubernetes-embedded-test-") {
 			namespaceName = strings.TrimSpace(strings.Split(line, "name: ")[1])
 			break
 		}
@@ -139,7 +140,7 @@ func TestRunManifest_NamespaceGeneration(t *testing.T) {
 	require.NotEmpty(t, namespaceName)
 
 	// Verify it contains UUID-like suffix (8 characters)
-	assert.Regexp(t, `^kubernetes-embedded-test-test-project-[a-f0-9]{8}$`, namespaceName)
+	assert.Regexp(t, `^kubernetes-embedded-test-[a-f0-9]{8}$`, namespaceName)
 }
 
 func TestRunManifest_RBACConfiguration(t *testing.T) {

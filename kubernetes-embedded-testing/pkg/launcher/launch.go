@@ -37,7 +37,7 @@ func RunLaunch(cfg config.Config) error {
 		return fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
-	namespace := generateTestNamespace(cfg.ProjectRoot)
+	namespace := generateTestNamespace(cfg)
 	logger.LauncherLogger.Info("Using test namespace: %s", namespace)
 
 	createdNamespace, err := apply.Namespace(ctx, client, namespace)

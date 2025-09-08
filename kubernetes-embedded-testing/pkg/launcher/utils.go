@@ -2,53 +2,35 @@ package launcher
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-
+	"regexp"
+	"strings"
+	"testrunner/pkg/config"
 	"github.com/google/uuid"
 )
 
-// generateTestNamespace generates a unique test namespace name using UUID
-func generateTestNamespace(projectRoot string) string {
-	var basename string
-
-	if projectRoot == "." {
-		if cwd, err := os.Getwd(); err == nil {
-			basename = filepath.Base(cwd)
-		} else {
-			basename = "default"
-		}
-	} else {
-		basename = filepath.Base(projectRoot)
+// generateTestNamespace generates a unique test namespace name using cleaned cfg.NamespacePrefix + UUID
+func generateTestNamespace(cfg config.Config) string {
+	prefix := cfg.NamespacePrefix
+	if prefix == "" {
+		prefix = "kubernetes-embedded-test"
 	}
-
-	// Clean the basename to make it safe for namespace names
-	// Replace any non-alphanumeric characters with hyphens
-	cleanName := ""
-	for _, r := range basename {
-		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
-			cleanName += string(r)
-		} else {
-			cleanName += "-"
-		}
-	}
-
-	// Remove multiple consecutive hyphens
-	for i := 0; i < len(cleanName)-1; i++ {
-		if cleanName[i] == '-' && cleanName[i+1] == '-' {
-			cleanName = cleanName[:i] + cleanName[i+1:]
-			i--
-		}
-	}
-
-	// Remove leading/trailing hyphens
-	if len(cleanName) > 0 && cleanName[0] == '-' {
-		cleanName = cleanName[1:]
-	}
-	if len(cleanName) == 0 {
-		cleanName = "default"
-	}
-
+	cleanPrefix := toKubeSafe(prefix)
 	namespaceUUID := uuid.New().String()[:8]
-	return fmt.Sprintf("kubernetes-embedded-test-%s-%s", cleanName, namespaceUUID)
+	return fmt.Sprintf("%s-%s", cleanPrefix, namespaceUUID)
+}
+
+// toKubeSafe converts a string to a Kubernetes-safe form: non-alphanumerics replaced with hyphens
+func toKubeSafe(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+		} else {
+			b.WriteRune('-')
+		}
+	}
+	// Collapse multiple hyphens and trim
+	re := regexp.MustCompile(`-+`)
+	collapsed := re.ReplaceAllString(b.String(), "-")
+	return strings.Trim(collapsed, "-")
 }

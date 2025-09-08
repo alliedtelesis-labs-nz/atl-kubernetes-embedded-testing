@@ -14,6 +14,7 @@ type LoggingConfig struct {
 
 type Config struct {
 	Mode            string          `mapstructure:"mode" yaml:"mode" json:"mode"`
+	NamespacePrefix string          `mapstructure:"namespacePrefix" yaml:"namespacePrefix" json:"namespacePrefix"`
 	ProjectRoot     string          `mapstructure:"projectRoot" yaml:"projectRoot" json:"projectRoot"`
 	Image           string          `mapstructure:"image" yaml:"image" json:"image"`
 	Debug           bool            `mapstructure:"debug" yaml:"debug" json:"debug"`
