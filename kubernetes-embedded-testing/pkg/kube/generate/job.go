@@ -3,13 +3,16 @@ package generate
 import (
 	"fmt"
 	"os"
+	"os/user"
 	"path/filepath"
+	"strconv"
 
 	"testrunner/pkg/config"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 )
 
 // Job generates a job manifest
@@ -22,6 +25,12 @@ func Job(cfg config.Config, namespace string) (*batchv1.Job, error) {
 	workingDir, err := calculateWorkingDirectory(cfg.ProjectRoot, cfg.WorkspacePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate working directory: %w", err)
+	}
+
+	// Get current user's UID and GID
+	uid, gid, err := getCurrentUserIDs()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current user IDs: %w", err)
 	}
 
 	projectName := "project"
@@ -65,6 +74,12 @@ func Job(cfg config.Config, namespace string) (*batchv1.Job, error) {
 								EmptyDir: &corev1.EmptyDirVolumeSource{},
 							},
 						},
+					},
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsUser:          pointer.Int64(uid),
+						RunAsGroup:         pointer.Int64(gid),
+						FSGroup:            pointer.Int64(gid),
+						SupplementalGroups: []int64{gid},
 					},
 					Containers: []corev1.Container{
 						{
@@ -117,4 +132,24 @@ func calculateWorkingDirectory(projectRoot, workspacePath string) (string, error
 		return workspacePath, nil
 	}
 	return filepath.Join(workspacePath, projectRoot), nil
+}
+
+// getCurrentUserIDs returns the current user's UID and GID
+func getCurrentUserIDs() (int64, int64, error) {
+	currentUser, err := user.Current()
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to get current user: %w", err)
+	}
+
+	uid, err := strconv.ParseInt(currentUser.Uid, 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to parse UID: %w", err)
+	}
+
+	gid, err := strconv.ParseInt(currentUser.Gid, 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to parse GID: %w", err)
+	}
+
+	return uid, gid, nil
 }
