@@ -20,6 +20,11 @@ func GetTestRunnerRBACRules() []rbacv1.PolicyRule {
 			Verbs:     []string{"get", "list", "create"},
 		},
 		{
+			APIGroups: []string{""},
+			Resources: []string{"events"},
+			Verbs:     []string{"get", "list", "watch"},
+		},
+		{
 			APIGroups: []string{"apps"},
 			Resources: []string{"deployments", "statefulsets", "daemonsets"},
 			Verbs:     []string{"get", "list", "watch", "create", "update", "patch", "delete"},
@@ -52,7 +57,12 @@ func ServiceAccount(namespace string) *corev1.ServiceAccount {
 }
 
 // Role generates a role manifest
-func Role(namespace string) *rbacv1.Role {
+func Role(namespace string, additionalRules ...rbacv1.PolicyRule) *rbacv1.Role {
+	rules := GetTestRunnerRBACRules()
+	if len(additionalRules) > 0 {
+		rules = MergeRBACRules(rules, additionalRules)
+	}
+	
 	return &rbacv1.Role{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "rbac.authorization.k8s.io/v1",
@@ -62,7 +72,7 @@ func Role(namespace string) *rbacv1.Role {
 			Name:      "ket-test-runner",
 			Namespace: namespace,
 		},
-		Rules: GetTestRunnerRBACRules(),
+		Rules: rules,
 	}
 }
 

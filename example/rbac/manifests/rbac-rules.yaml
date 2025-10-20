@@ -1,0 +1,15 @@
+# Additional RBAC Rules for OpenFeature Support
+#
+# This file adds RBAC permissions for OpenFeature resources.
+# Use this when your tests need to interact with OpenFeature FeatureFlags and FeatureFlagConfigurations.
+#
+# These rules will be merged with the default RBAC rules provided by ket.
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: openfeature-featureflag-reader
+rules:
+  - apiGroups: ["core.openfeature.dev"]
+    resources: ["featureflags", "featureflagconfigurations"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]

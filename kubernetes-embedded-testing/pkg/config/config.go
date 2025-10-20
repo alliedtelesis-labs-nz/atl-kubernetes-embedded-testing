@@ -23,6 +23,7 @@ type Config struct {
 	BackoffLimit    int32           `mapstructure:"backoffLimit" yaml:"backoffLimit" json:"backoffLimit"`
 	ActiveDeadlineS int64           `mapstructure:"activeDeadlineS" yaml:"activeDeadlineS" json:"activeDeadlineS"`
 	WorkspacePath   string          `mapstructure:"clusterWorkspacePath" yaml:"clusterWorkspacePath" json:"clusterWorkspacePath"`
+	RbacFile        string          `mapstructure:"rbac" yaml:"rbac" json:"rbac"`
 	Logging         LoggingConfig   `mapstructure:"logging" yaml:"logging" json:"logging"`
 	Ctx             context.Context `mapstructure:"-" yaml:"-" json:"-"`
 }
