@@ -58,6 +58,11 @@ var FlagMapping = struct {
 				"Must include dependencies for the test command (e.g., mocha or other test runners).",
 			Default: "atidyshirt/kubernetes-embedded-test-runner-base:latest",
 		},
+		"rbac": {
+			ViperKey:    "rbac",
+			Description: "Extra Yaml configuration to load into the rbac options",
+			Default:     "",
+		},
 		"test-command": {
 			ViperKey:    "testCommand",
 			Description: "Command to execute inside the test runner pod (e.g., 'mocha **/*.spec.ts').",

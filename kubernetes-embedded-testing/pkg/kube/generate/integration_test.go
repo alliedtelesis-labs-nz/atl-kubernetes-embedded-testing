@@ -210,15 +210,113 @@ func TestGetTestRunnerRBACRules_ContainsExpectedRules(t *testing.T) {
 	assert.True(t, apiGroups["networking.k8s.io"])
 
 	// Verify core resources
-	coreRule := findRuleByAPIGroup(rules, "")
-	require.NotNil(t, coreRule)
-	assert.Contains(t, coreRule.Resources, "pods")
-	assert.Contains(t, coreRule.Resources, "services")
+	coreRules := findAllRulesByAPIGroup(rules, "")
+	require.NotEmpty(t, coreRules)
+	
+	// Check for pods, services in main core rule
+	foundPods := false
+	foundEvents := false
+	for _, rule := range coreRules {
+		for _, resource := range rule.Resources {
+			if resource == "pods" {
+				foundPods = true
+			}
+			if resource == "events" {
+				foundEvents = true
+			}
+		}
+	}
+	assert.True(t, foundPods, "pods resource should be present")
+	assert.True(t, foundEvents, "events resource should be present")
 
 	// Verify batch resources (jobs are in batch API group)
 	batchRule := findRuleByAPIGroup(rules, "batch")
 	require.NotNil(t, batchRule)
 	assert.Contains(t, batchRule.Resources, "jobs")
+}
+
+// Helper function to find all rules by API group
+func findAllRulesByAPIGroup(rules []rbacv1.PolicyRule, apiGroup string) []rbacv1.PolicyRule {
+	var matched []rbacv1.PolicyRule
+	for _, rule := range rules {
+		for _, group := range rule.APIGroups {
+			if group == apiGroup {
+				matched = append(matched, rule)
+				break
+			}
+		}
+	}
+	return matched
+}
+
+func TestMergeRBACRules(t *testing.T) {
+	defaultRules := []rbacv1.PolicyRule{
+		{
+			APIGroups: []string{""},
+			Resources: []string{"pods"},
+			Verbs:     []string{"get", "list"},
+		},
+	}
+
+	additionalRules := []rbacv1.PolicyRule{
+		{
+			APIGroups: []string{"apps"},
+			Resources: []string{"deployments"},
+			Verbs:     []string{"create", "update"},
+		},
+	}
+
+	merged := MergeRBACRules(defaultRules, additionalRules)
+
+	assert.Len(t, merged, 2)
+	assert.Equal(t, defaultRules[0], merged[0])
+	assert.Equal(t, additionalRules[0], merged[1])
+}
+
+func TestMergeRBACRules_WithEmptyAdditional(t *testing.T) {
+	defaultRules := []rbacv1.PolicyRule{
+		{
+			APIGroups: []string{""},
+			Resources: []string{"pods"},
+			Verbs:     []string{"get"},
+		},
+	}
+
+	merged := MergeRBACRules(defaultRules, nil)
+
+	assert.Equal(t, defaultRules, merged)
+}
+
+func TestRole_WithAdditionalRules(t *testing.T) {
+	namespace := "test-namespace"
+	additionalRules := []rbacv1.PolicyRule{
+		{
+			APIGroups: []string{"custom.io"},
+			Resources: []string{"customresources"},
+			Verbs:     []string{"get", "list"},
+		},
+	}
+
+	role := Role(namespace, additionalRules...)
+
+	assert.Equal(t, "rbac.authorization.k8s.io/v1", role.APIVersion)
+	assert.Equal(t, "Role", role.Kind)
+	assert.Equal(t, "ket-test-runner", role.Name)
+	assert.Equal(t, namespace, role.Namespace)
+	
+	// Should have default rules plus additional rules
+	defaultRuleCount := len(GetTestRunnerRBACRules())
+	assert.Len(t, role.Rules, defaultRuleCount+len(additionalRules))
+	
+	// Verify the additional rule is present
+	foundCustomRule := false
+	for _, rule := range role.Rules {
+		if len(rule.APIGroups) > 0 && rule.APIGroups[0] == "custom.io" {
+			foundCustomRule = true
+			break
+		}
+	}
+	assert.True(t, foundCustomRule, "Additional custom rule should be present")
 }
 
 // Helper function to find rule by API group

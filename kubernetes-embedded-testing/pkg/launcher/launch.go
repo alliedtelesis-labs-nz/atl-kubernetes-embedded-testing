@@ -45,7 +45,7 @@ func RunLaunch(cfg config.Config) error {
 		return fmt.Errorf("failed to create namespace: %w", err)
 	}
 
-	err = apply.RBAC(ctx, client, createdNamespace)
+	err = apply.RBAC(ctx, client, createdNamespace, &cfg)
 	if err != nil {
 		return fmt.Errorf("failed to create RBAC resources: %w", err)
 	}

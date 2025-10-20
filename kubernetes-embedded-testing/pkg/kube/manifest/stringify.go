@@ -4,6 +4,7 @@ import (
 	"testrunner/pkg/config"
 	"testrunner/pkg/kube/generate"
 
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -29,7 +30,18 @@ func marshalKubernetesObject(obj runtime.Object) ([]byte, error) {
 func All(cfg config.Config, namespace string) ([]string, error) {
 	ns := generate.Namespace(namespace)
 	sa := generate.ServiceAccount(namespace)
-	role := generate.Role(namespace)
+	
+	// Load additional RBAC rules from file if specified
+	var additionalRules []rbacv1.PolicyRule
+	if cfg.RbacFile != "" {
+		rules, err := generate.LoadRBACRulesFromFile(cfg.RbacFile)
+		if err != nil {
+			return nil, err
+		}
+		additionalRules = rules
+	}
+	
+	role := generate.Role(namespace, additionalRules...)
 	roleBinding := generate.RoleBinding(namespace)
 	job, err := generate.Job(cfg, namespace)
 	if err != nil {

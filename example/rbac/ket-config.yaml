@@ -1,0 +1,23 @@
+# Example ket-config.yaml for RBAC configuration
+#
+# This configuration file demonstrates how to use custom RBAC rules with ket.
+# Place this file in your project directory and ket will automatically load it,
+# or specify a custom path with --config flag.
+
+# Path to additional RBAC rules file (relative to this config file or absolute path)
+rbac: manifests/rbac-rules.yaml
+
+# Other optional configuration options:
+# namespacePrefix: "my-test"
+# image: "node:18-alpine"
+# backoffLimit: 2
+# activeDeadlineS: 1800
+# projectRoot: "."
+# clusterWorkspacePath: "/workspace"
+# keepNamespace: false
+# debug: false
+
+# Logging configuration
+logging:
+  prefix: true
+  timestamp: false
