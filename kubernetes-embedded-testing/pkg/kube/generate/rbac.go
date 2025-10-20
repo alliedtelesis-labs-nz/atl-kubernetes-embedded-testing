@@ -58,10 +58,7 @@ func ServiceAccount(namespace string) *corev1.ServiceAccount {
 
 // Role generates a role manifest
 func Role(namespace string, additionalRules ...rbacv1.PolicyRule) *rbacv1.Role {
-	rules := GetTestRunnerRBACRules()
-	if len(additionalRules) > 0 {
-		rules = MergeRBACRules(rules, additionalRules)
-	}
+	rules := MergeRBACRules(GetTestRunnerRBACRules(), additionalRules)
 	
 	return &rbacv1.Role{
 		TypeMeta: metav1.TypeMeta{
