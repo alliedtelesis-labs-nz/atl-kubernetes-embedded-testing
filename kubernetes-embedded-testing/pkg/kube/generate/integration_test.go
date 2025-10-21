@@ -34,7 +34,7 @@ func TestRole_GeneratesCorrectManifest(t *testing.T) {
 	role := Role(namespace)
 
 	assert.Equal(t, "rbac.authorization.k8s.io/v1", role.APIVersion)
-	assert.Equal(t, "Role", role.Kind)
+	assert.Equal(t, "ClusterRole", role.Kind)
 	assert.Equal(t, "ket-test-runner", role.Name)
 	assert.Equal(t, namespace, role.Namespace)
 	assert.NotEmpty(t, role.Rules)
@@ -45,14 +45,14 @@ func TestRoleBinding_GeneratesCorrectManifest(t *testing.T) {
 	rb := RoleBinding(namespace)
 
 	assert.Equal(t, "rbac.authorization.k8s.io/v1", rb.APIVersion)
-	assert.Equal(t, "RoleBinding", rb.Kind)
+	assert.Equal(t, "ClusterRoleBinding", rb.Kind)
 	assert.Equal(t, "ket-test-runner", rb.Name)
 	assert.Equal(t, namespace, rb.Namespace)
 	assert.Len(t, rb.Subjects, 1)
 	assert.Equal(t, "ServiceAccount", rb.Subjects[0].Kind)
 	assert.Equal(t, "default", rb.Subjects[0].Name)
 	assert.Equal(t, namespace, rb.Subjects[0].Namespace)
-	assert.Equal(t, "Role", rb.RoleRef.Kind)
+	assert.Equal(t, "ClusterRole", rb.RoleRef.Kind)
 	assert.Equal(t, "ket-test-runner", rb.RoleRef.Name)
 }
 
@@ -300,7 +300,7 @@ func TestRole_WithAdditionalRules(t *testing.T) {
 	role := Role(namespace, additionalRules...)
 
 	assert.Equal(t, "rbac.authorization.k8s.io/v1", role.APIVersion)
-	assert.Equal(t, "Role", role.Kind)
+	assert.Equal(t, "ClusterRole", role.Kind)
 	assert.Equal(t, "ket-test-runner", role.Name)
 	assert.Equal(t, namespace, role.Namespace)
 	

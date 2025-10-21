@@ -37,8 +37,8 @@ func TestAll_GeneratesValidYAML(t *testing.T) {
 	allManifests := strings.Join(manifests, "\n")
 	assert.Contains(t, allManifests, "kind: Namespace")
 	assert.Contains(t, allManifests, "kind: ServiceAccount")
-	assert.Contains(t, allManifests, "kind: Role")
-	assert.Contains(t, allManifests, "kind: RoleBinding")
+	assert.Contains(t, allManifests, "kind: ClusterRole")
+	assert.Contains(t, allManifests, "kind: ClusterRoleBinding")
 	assert.Contains(t, allManifests, "kind: Job")
 }
 
