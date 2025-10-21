@@ -39,8 +39,8 @@ func TestRunManifest_GeneratesValidYAML(t *testing.T) {
 	outputStr := string(output)
 	assert.Contains(t, outputStr, "kind: Namespace")
 	assert.Contains(t, outputStr, "kind: ServiceAccount")
-	assert.Contains(t, outputStr, "kind: Role")
-	assert.Contains(t, outputStr, "kind: RoleBinding")
+	assert.Contains(t, outputStr, "kind: ClusterRole")
+	assert.Contains(t, outputStr, "kind: ClusterRoleBinding")
 	assert.Contains(t, outputStr, "kind: Job")
 
 	// Verify YAML structure
@@ -175,7 +175,7 @@ func TestRunManifest_RBACConfiguration(t *testing.T) {
 
 	// Verify RoleBinding
 	assert.Contains(t, outputStr, "kind: ServiceAccount")
-	assert.Contains(t, outputStr, "kind: Role")
+	assert.Contains(t, outputStr, "kind: ClusterRole")
 }
 
 func TestRunManifest_JobConfiguration(t *testing.T) {

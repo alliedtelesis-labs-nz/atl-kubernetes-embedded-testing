@@ -63,7 +63,7 @@ func Role(namespace string, additionalRules ...rbacv1.PolicyRule) *rbacv1.Role {
 	return &rbacv1.Role{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "rbac.authorization.k8s.io/v1",
-			Kind:       "Role",
+			Kind:       "ClusterRole",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "ket-test-runner",
@@ -78,7 +78,7 @@ func RoleBinding(namespace string) *rbacv1.RoleBinding {
 	return &rbacv1.RoleBinding{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "rbac.authorization.k8s.io/v1",
-			Kind:       "RoleBinding",
+			Kind:       "ClusterRoleBinding",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "ket-test-runner",
@@ -92,7 +92,7 @@ func RoleBinding(namespace string) *rbacv1.RoleBinding {
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
-			Kind:     "Role",
+			Kind:     "ClusterRole",
 			Name:     "ket-test-runner",
 			APIGroup: "rbac.authorization.k8s.io",
 		},
