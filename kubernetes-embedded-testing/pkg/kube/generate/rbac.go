@@ -1,12 +1,11 @@
 package generate
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// GetTestRunnerRBACRules returns the RBAC rules for the test runner role
+// GetTestRunnerRBACRules returns the RBAC rules for the test runner ClusterRole
 func GetTestRunnerRBACRules() []rbacv1.PolicyRule {
 	return []rbacv1.PolicyRule{
 		{
@@ -39,50 +38,39 @@ func GetTestRunnerRBACRules() []rbacv1.PolicyRule {
 			Resources: []string{"ingresses", "networkpolicies"},
 			Verbs:     []string{"get", "list", "watch", "create", "update", "patch", "delete"},
 		},
-	}
-}
-
-// ServiceAccount generates a service account manifest
-func ServiceAccount(namespace string) *corev1.ServiceAccount {
-	return &corev1.ServiceAccount{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "ServiceAccount",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "default",
-			Namespace: namespace,
+		{
+			APIGroups: []string{""}, // The core API group for Namespaces
+			Resources: []string{"namespaces"},
+			Verbs:     []string{"get", "delete"},
 		},
 	}
 }
 
-// Role generates a role manifest
-func Role(namespace string, additionalRules ...rbacv1.PolicyRule) *rbacv1.Role {
+// ClusterRole generates a ClusterRole manifest
+func ClusterRole(additionalRules ...rbacv1.PolicyRule) *rbacv1.ClusterRole {
 	rules := MergeRBACRules(GetTestRunnerRBACRules(), additionalRules)
-	
-	return &rbacv1.Role{
+
+	return &rbacv1.ClusterRole{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "rbac.authorization.k8s.io/v1",
 			Kind:       "ClusterRole",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "ket-test-runner",
-			Namespace: namespace,
+			Name: "ket-test-runner",
 		},
 		Rules: rules,
 	}
 }
 
-// RoleBinding generates a role binding manifest
-func RoleBinding(namespace string) *rbacv1.RoleBinding {
-	return &rbacv1.RoleBinding{
+// ClusterRoleBinding generates a ClusterRoleBinding manifest
+func ClusterRoleBinding(namespace string) *rbacv1.ClusterRoleBinding {
+	return &rbacv1.ClusterRoleBinding{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "rbac.authorization.k8s.io/v1",
 			Kind:       "ClusterRoleBinding",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "ket-test-runner",
-			Namespace: namespace,
+			Name: "ket-test-runner",
 		},
 		Subjects: []rbacv1.Subject{
 			{

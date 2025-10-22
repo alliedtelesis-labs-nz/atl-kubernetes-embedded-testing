@@ -29,7 +29,6 @@ func marshalKubernetesObject(obj runtime.Object) ([]byte, error) {
 // All generates all manifests as YAML strings
 func All(cfg config.Config, namespace string) ([]string, error) {
 	ns := generate.Namespace(namespace)
-	sa := generate.ServiceAccount(namespace)
 	
 	// Load additional RBAC rules from file if specified
 	var additionalRules []rbacv1.PolicyRule

@@ -15,8 +15,6 @@ import (
 
 // RBAC creates the necessary RBAC resources for the test namespace
 func RBAC(ctx context.Context, client *kubernetes.Clientset, namespace string, cfg *config.Config) error {
-	serviceAccount := generate.ServiceAccount(namespace)
-	
 	// Load additional RBAC rules from file if specified
 	var additionalRules []rbacv1.PolicyRule
 	if cfg != nil && cfg.RbacFile != "" {
@@ -27,28 +25,21 @@ func RBAC(ctx context.Context, client *kubernetes.Clientset, namespace string, c
 		additionalRules = rules
 	}
 	
-	role := generate.Role(namespace, additionalRules...)
-	roleBinding := generate.RoleBinding(namespace)
+	role := generate.ClusterRole(additionalRules...)
+	roleBinding := generate.ClusterRoleBinding(namespace)
 
-	_, err := client.CoreV1().ServiceAccounts(namespace).Create(ctx, serviceAccount, metav1.CreateOptions{})
+	_, err := client.RbacV1().ClusterRoles().Create(ctx, role, metav1.CreateOptions{})
 	if err != nil {
-		if !strings.Contains(err.Error(), "already exists") {
-			return fmt.Errorf("failed to create service account: %w", err)
-		}
+		return fmt.Errorf("failed to create role: %w", err)
 	}
 
-	_, err = client.RbacV1().Roles(namespace).Create(ctx, role, metav1.CreateOptions{})
+	_, err = client.RbacV1().ClusterRoleBindings().Create(ctx, roleBinding, metav1.CreateOptions{})
 	if err != nil {
-		if !strings.Contains(err.Error(), "already exists") {
-			return fmt.Errorf("failed to create role: %w", err)
-		}
+		return fmt.Errorf("failed to create role binding: %w", err)
 	}
 
-	_, err = client.RbacV1().RoleBindings(namespace).Create(ctx, roleBinding, metav1.CreateOptions{})
-	if err != nil {
-		if !strings.Contains(err.Error(), "already exists") {
-			return fmt.Errorf("failed to create role binding: %w", err)
-		}
+	return nil
+}
 	}
 
 	return nil

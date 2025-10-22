@@ -31,7 +31,7 @@ func TestServiceAccount_GeneratesCorrectManifest(t *testing.T) {
 
 func TestRole_GeneratesCorrectManifest(t *testing.T) {
 	namespace := "test-namespace"
-	role := Role(namespace)
+	role := ClusterRole()
 
 	assert.Equal(t, "rbac.authorization.k8s.io/v1", role.APIVersion)
 	assert.Equal(t, "ClusterRole", role.Kind)
@@ -42,7 +42,7 @@ func TestRole_GeneratesCorrectManifest(t *testing.T) {
 
 func TestRoleBinding_GeneratesCorrectManifest(t *testing.T) {
 	namespace := "test-namespace"
-	rb := RoleBinding(namespace)
+	rb := ClusterRoleBinding(namespace)
 
 	assert.Equal(t, "rbac.authorization.k8s.io/v1", rb.APIVersion)
 	assert.Equal(t, "ClusterRoleBinding", rb.Kind)
@@ -297,7 +297,7 @@ func TestRole_WithAdditionalRules(t *testing.T) {
 		},
 	}
 
-	role := Role(namespace, additionalRules...)
+	role := ClusterRole(additionalRules...)
 
 	assert.Equal(t, "rbac.authorization.k8s.io/v1", role.APIVersion)
 	assert.Equal(t, "ClusterRole", role.Kind)
