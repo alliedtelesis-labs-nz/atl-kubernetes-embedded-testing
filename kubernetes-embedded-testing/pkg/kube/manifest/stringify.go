@@ -29,7 +29,6 @@ func marshalKubernetesObject(obj runtime.Object) ([]byte, error) {
 // All generates all manifests as YAML strings
 func All(cfg config.Config, namespace string) ([]string, error) {
 	ns := generate.Namespace(namespace)
-	sa := generate.ServiceAccount(namespace)
 	
 	// Load additional RBAC rules from file if specified
 	var additionalRules []rbacv1.PolicyRule
@@ -41,14 +40,14 @@ func All(cfg config.Config, namespace string) ([]string, error) {
 		additionalRules = rules
 	}
 	
-	role := generate.Role(namespace, additionalRules...)
-	roleBinding := generate.RoleBinding(namespace)
+	role := generate.ClusterRole(additionalRules...)
+	roleBinding := generate.ClusterRoleBinding(namespace)
 	job, err := generate.Job(cfg, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	manifests := []runtime.Object{ns, sa, role, roleBinding, job}
+	manifests := []runtime.Object{ns, role, roleBinding, job}
 	results := make([]string, len(manifests))
 
 	for i, manifest := range manifests {
