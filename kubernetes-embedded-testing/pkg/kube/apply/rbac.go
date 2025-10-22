@@ -55,13 +55,6 @@ func DeleteRBAC(ctx context.Context, client *kubernetes.Clientset, namespace str
 		return fmt.Errorf("failed to delete ClusterRole ket-test-runner: %w", err)
 	}
 
-	// Deleting the ServiceAccount is not strictly necessary if you delete the namespace,
-	// but including it ensures a complete cleanup if the namespace deletion fails for some reason.
-	// A ServiceAccount is a namespaced resource.
-	fmt.Printf("Deleting ServiceAccount default in namespace %s...\n", namespace)
-	if err := client.CoreV1().ServiceAccounts(namespace).Delete(ctx, "default", metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("failed to delete ServiceAccount default: %w", err)
-	}
 	return nil
 }
 
