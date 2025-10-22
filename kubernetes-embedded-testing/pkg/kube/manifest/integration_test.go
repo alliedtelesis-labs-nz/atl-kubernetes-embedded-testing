@@ -23,7 +23,7 @@ func TestAll_GeneratesValidYAML(t *testing.T) {
 
 	manifests, err := All(cfg, namespace)
 	require.NoError(t, err)
-	require.Len(t, manifests, 5) // Namespace, ServiceAccount, Role, RoleBinding, Job
+	require.Len(t, manifests, 4) // Namespace, ClusterRole, ClusterRoleBinding, Job
 
 	// Verify all manifests are valid YAML
 	for i, manifest := range manifests {
@@ -36,7 +36,6 @@ func TestAll_GeneratesValidYAML(t *testing.T) {
 	// Verify specific resource types
 	allManifests := strings.Join(manifests, "\n")
 	assert.Contains(t, allManifests, "kind: Namespace")
-	assert.Contains(t, allManifests, "kind: ServiceAccount")
 	assert.Contains(t, allManifests, "kind: ClusterRole")
 	assert.Contains(t, allManifests, "kind: ClusterRoleBinding")
 	assert.Contains(t, allManifests, "kind: Job")
@@ -61,10 +60,7 @@ func TestAll_ContainsExpectedConfiguration(t *testing.T) {
 	// Verify namespace
 	assert.Contains(t, allManifests, "name: "+namespace)
 
-	// Verify service account
-	assert.Contains(t, allManifests, "name: default")
-
-	// Verify role and role binding
+	// Verify cluster role and cluster role binding
 	assert.Contains(t, allManifests, "name: ket-test-runner")
 
 	// Verify job configuration

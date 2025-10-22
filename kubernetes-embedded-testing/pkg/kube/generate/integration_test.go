@@ -19,24 +19,14 @@ func TestNamespace_GeneratesCorrectManifest(t *testing.T) {
 	assert.Equal(t, namespace, ns.Name)
 }
 
-func TestServiceAccount_GeneratesCorrectManifest(t *testing.T) {
-	namespace := "test-namespace"
-	sa := ServiceAccount(namespace)
 
-	assert.Equal(t, "v1", sa.APIVersion)
-	assert.Equal(t, "ServiceAccount", sa.Kind)
-	assert.Equal(t, "default", sa.Name)
-	assert.Equal(t, namespace, sa.Namespace)
-}
 
 func TestRole_GeneratesCorrectManifest(t *testing.T) {
-	namespace := "test-namespace"
 	role := ClusterRole()
 
 	assert.Equal(t, "rbac.authorization.k8s.io/v1", role.APIVersion)
 	assert.Equal(t, "ClusterRole", role.Kind)
 	assert.Equal(t, "ket-test-runner", role.Name)
-	assert.Equal(t, namespace, role.Namespace)
 	assert.NotEmpty(t, role.Rules)
 }
 
@@ -47,7 +37,6 @@ func TestRoleBinding_GeneratesCorrectManifest(t *testing.T) {
 	assert.Equal(t, "rbac.authorization.k8s.io/v1", rb.APIVersion)
 	assert.Equal(t, "ClusterRoleBinding", rb.Kind)
 	assert.Equal(t, "ket-test-runner", rb.Name)
-	assert.Equal(t, namespace, rb.Namespace)
 	assert.Len(t, rb.Subjects, 1)
 	assert.Equal(t, "ServiceAccount", rb.Subjects[0].Kind)
 	assert.Equal(t, "default", rb.Subjects[0].Name)
@@ -288,7 +277,6 @@ func TestMergeRBACRules_WithEmptyAdditional(t *testing.T) {
 }
 
 func TestRole_WithAdditionalRules(t *testing.T) {
-	namespace := "test-namespace"
 	additionalRules := []rbacv1.PolicyRule{
 		{
 			APIGroups: []string{"custom.io"},
@@ -302,7 +290,6 @@ func TestRole_WithAdditionalRules(t *testing.T) {
 	assert.Equal(t, "rbac.authorization.k8s.io/v1", role.APIVersion)
 	assert.Equal(t, "ClusterRole", role.Kind)
 	assert.Equal(t, "ket-test-runner", role.Name)
-	assert.Equal(t, namespace, role.Namespace)
 	
 	// Should have default rules plus additional rules
 	defaultRuleCount := len(GetTestRunnerRBACRules())
