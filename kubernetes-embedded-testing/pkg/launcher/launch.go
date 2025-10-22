@@ -63,6 +63,9 @@ func RunLaunch(cfg config.Config) error {
 				logger.LauncherLogger.Warn("Failed to cleanup namespace %s: %v", createdNamespace, err)
 			}
 		}
+		if err := apply.DeleteRBAC(ctx, client, createdNamespace); err != nil {
+			logger.LauncherLogger.Warn("Failed to cleanup namespace %s: %v", createdNamespace, err)
+		}
 	}()
 
 	if err := apply.StreamTestOutputToHost(ctx, client, job); err != nil {
