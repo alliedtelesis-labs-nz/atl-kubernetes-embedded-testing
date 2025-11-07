@@ -10,13 +10,17 @@ import (
 
 // generateTestNamespace generates a unique test namespace name using cleaned cfg.NamespacePrefix + UUID
 func generateTestNamespace(cfg config.Config) string {
-	prefix := cfg.NamespacePrefix
-	if prefix == "" {
-		prefix = "kubernetes-embedded-test"
+        namespace := cfg.Namespace
+	if namespace == "" {
+		prefix := cfg.NamespacePrefix
+		if prefix == "" {
+    		       prefix = "kubernetes-embedded-test"
+    	        }
+    	        cleanPrefix := toKubeSafe(prefix)
+    	        namespaceUUID := uuid.New().String()[:8]
+    	        namespace = fmt.Sprintf("%s-%s", cleanPrefix, namespaceUUID)
 	}
-	cleanPrefix := toKubeSafe(prefix)
-	namespaceUUID := uuid.New().String()[:8]
-	return fmt.Sprintf("%s-%s", cleanPrefix, namespaceUUID)
+	return namespace
 }
 
 // toKubeSafe converts a string to a Kubernetes-safe form: non-alphanumerics replaced with hyphens

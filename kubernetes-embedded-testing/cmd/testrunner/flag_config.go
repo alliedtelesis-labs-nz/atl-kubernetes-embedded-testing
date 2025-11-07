@@ -35,6 +35,11 @@ var FlagMapping = struct {
 			Description: "Prefix for the namespace name e.g. kubernetes-embedded-test-nodejs-example",
 			Default:     "kubernetes-embedded-test",
 		},
+		"namespace": {
+			ViperKey:    "namespace",
+			Description: "name-space to use within cluster. Overrides any ns-prefix setting",
+			Default:     "",
+		},
 		"debug": {
 			ViperKey:    "debug",
 			Description: "Enable debug logging",

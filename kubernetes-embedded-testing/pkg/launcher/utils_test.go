@@ -80,3 +80,18 @@ func TestGenerateTestNamespace_LengthAndFormat(t *testing.T) {
 	uuidPattern := regexp.MustCompile(`^[a-f0-9]{8}$`)
 	assert.True(t, uuidPattern.MatchString(uuidPart))
 }
+
+func TestGenerateTestNamespace_Namespace(t *testing.T) {
+	cfg := config.Config{Namespace: "test-namespace"}
+	namespace := generateTestNamespace(cfg)
+        assert.Equal(t, "test-namespace", namespace)
+}
+
+func TestGenerateTestNamespace_NamespaceOverride(t *testing.T) {
+	cfg := config.Config{
+		Namespace:       "test-namespace",
+		NamespacePrefix: "kubernetes-embedded-test",
+ 	}
+	namespace := generateTestNamespace(cfg)
+	assert.Equal(t, "test-namespace", namespace)
+}
