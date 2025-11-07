@@ -170,11 +170,17 @@ func getPodStatus(pod corev1.Pod) string {
 
 // isPodReadyForLogs checks if the pod is ready to stream logs from
 func isPodReadyForLogs(pod corev1.Pod) bool {
+
 	if len(pod.Status.ContainerStatuses) == 0 {
 		return false
 	}
 
 	containerStatus := pod.Status.ContainerStatuses[0]
+
+	if containerStatus.State.Terminated != nil {
+		return true
+	}
+
 	return containerStatus.State.Running != nil && containerStatus.Ready
 }
 

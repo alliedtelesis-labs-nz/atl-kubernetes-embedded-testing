@@ -8,6 +8,7 @@ import (
 	"testrunner/pkg/config"
 	"testrunner/pkg/kube/apply"
 	"testrunner/pkg/logger"
+	 metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // TestExecutionError represents a test execution failure with an exit code
@@ -91,6 +92,12 @@ func RunLaunch(cfg config.Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to wait for test completion: %w", err)
 	}
+
+	logger.LauncherLogger.Info("Deleting job %s...", job.Name)
+	policy := metav1.DeletePropagationBackground
+	err = client.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
+		PropagationPolicy: &policy,
+	})
 
 	if !result.Success {
 		return &TestExecutionError{
